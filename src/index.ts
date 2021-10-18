@@ -6,6 +6,7 @@
  */
 
 import { getAsyncLifecycle, defineConfigSchema } from '@openmrs/esm-framework';
+import { getPatient } from './patient-getter/patient-getter.resource';
 import { configSchema } from './config-schema';
 
 /**
@@ -48,11 +49,41 @@ function setupOpenMRS() {
 
   defineConfigSchema(moduleName, configSchema);
 
+  const helloOptions = {
+    online: {
+      getPatient,
+    },
+    offline: {
+      getPatient() {
+        //
+        return Promise.resolve({
+          name: [
+            {
+              given: 'Foo',
+              family: 'Bar',
+            },
+          ],
+          gender: 'female',
+          birthDate: '2001/01/01',
+        });
+      },
+    },
+  };
+
   return {
     pages: [
       {
         load: getAsyncLifecycle(() => import('./hello'), options),
         route: 'hello',
+        ...helloOptions,
+      },
+    ],
+    extensions: [
+      {
+        id: 'hello-action-link',
+        slot: 'top-nav-actions-slot',
+        load: getAsyncLifecycle(() => import('./link'), options),
+        ...helloOptions,
       },
     ],
   };
